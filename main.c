@@ -11,8 +11,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifndef _WIN32
 #include <unistd.h>
 #include <termios.h>
+#endif
 #include <time.h>
 
 /* ============================ CONSTANTS & DEFINITIONS ============================ */
@@ -184,8 +186,37 @@ void get_input(char *buffer, int size) {
     }
 }
 
+#ifdef _WIN32
+#include <conio.h>
+#else
+#include <termios.h>
+#include <unistd.h>
+#endif
+
+/* ... (other includes are fine) ... */
+
 // Password masking
 void get_password(char *password, int size) {
+#ifdef _WIN32
+    int i = 0;
+    int c;
+    while (i < size - 1) {
+        c = _getch();
+        if (c == '\r' || c == '\n') break;
+        if (c == 3) exit(0); // Handle Ctrl+C
+        if (c == 8) { // Backspace
+            if (i > 0) {
+                printf("\b \b");
+                i--;
+            }
+        } else {
+            // No echo or print *
+            password[i++] = c;
+        }
+    }
+    password[i] = '\0';
+    printf("\n");
+#else
     struct termios oldt, newt;
     int i = 0;
     int c;
@@ -204,6 +235,7 @@ void get_password(char *password, int size) {
     // Restore echo
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     printf("\n");
+#endif
 }
 
 void trim_whitespace(char *str) {
