@@ -1,0 +1,4 @@
+main
+srms
+*.o
+.DS_Store
